@@ -1,26 +1,5 @@
-import { flipLandmark, rotateCornerDescription, rotateEdgeDescription, rotateLine, rotatePoint } from "./rotation";
+import { flipLandmark, rotateArrow, rotateCornerDescription, rotateEdgeDescription, rotateLine, rotateMarking, rotatePoint } from "./rotation";
 import type { Arrow, Point, Line, DrawingSettings, FoldDrawingElements, Marking } from "@/types/types";
-
-
-
-function rotateArrow (arrow: Arrow, landmarkRotation: number, landmarkFlip: number): Arrow {
-  const start = rotatePoint(arrow[0], arrow[1], landmarkRotation, landmarkFlip);
-  const end = rotatePoint(arrow[2], arrow[3], landmarkRotation, landmarkFlip);
-  const startToEnd = [end[0] - start[0], end[1] - start[1]];
-  // checkForSmallFold(startToEnd);
-  return [start[0] + 0.1 * startToEnd[0], start[1] + 0.1 * startToEnd[1], start[0] + 0.9 * startToEnd[0], start[1] + 0.9 * startToEnd[1]];
-};
-function rotateMarking (point: Marking, landmarkRotation: number, landmarkFlip: number): Marking {
-  const rotatedMarking: Marking = rotatePoint(point[0], point[1], landmarkRotation, landmarkFlip);
-  if (point.length === 3) { // a line section
-    if (landmarkFlip % 2 == 1) {
-      rotatedMarking.push(point[2] + Math.PI * landmarkRotation / 2);
-    } else {
-      rotatedMarking.push(-point[2] - Math.PI * landmarkRotation / 2);
-    }
-  }
-  return rotatedMarking
-};
 
 function drawLine (ctx: CanvasRenderingContext2D, li: Line, stepNum: number, stepsPerLine: number): void {
   ctx.moveTo(li[0] * 100 + 200 * (stepNum % stepsPerLine), li[1] * 100 + 200 * Math.floor(stepNum / stepsPerLine));
@@ -237,7 +216,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
         line: [c, 0, 0, 1],
         arrows: [[0, 0, 2 * c / (1 + c * c), 2 - 2 / (1 + c * c)]],
         description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner to the landmark",
-        markings: [[c, 0], [c, 1]]
+        markings: [[0,1],[c,0]]
     };
     const fold2: FoldDrawingElements = {
         line: [0, (Math.sqrt(c * c + 1) - c) * c, c, 0],

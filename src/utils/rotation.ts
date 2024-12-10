@@ -1,4 +1,4 @@
-import type { Point, Line } from "@/types/types";
+import type { Point, Line, Marking, Arrow } from "@/types/types";
 
 export function rotatePoint (x: number, y: number, r: number, f: number): Point { // r is the number of clockwise rotations
   let p: Point | undefined
@@ -50,4 +50,23 @@ export function rotateEdgeDescription (e: number, landmarkRotation: number, land
     }
   }
   return edgeNames[(e + landmarkRotation) % 4];
+};
+
+export function rotateArrow (arrow: Arrow, landmarkRotation: number, landmarkFlip: number): Arrow {
+  const start = rotatePoint(arrow[0], arrow[1], landmarkRotation, landmarkFlip);
+  const end = rotatePoint(arrow[2], arrow[3], landmarkRotation, landmarkFlip);
+  const startToEnd = [end[0] - start[0], end[1] - start[1]];
+  // checkForSmallFold(startToEnd);
+  return [start[0] + 0.1 * startToEnd[0], start[1] + 0.1 * startToEnd[1], start[0] + 0.9 * startToEnd[0], start[1] + 0.9 * startToEnd[1]];
+};
+export function rotateMarking (point: Marking, landmarkRotation: number, landmarkFlip: number): Marking {
+  const rotatedMarking: Marking = rotatePoint(point[0], point[1], landmarkRotation, landmarkFlip);
+  if (point.length === 3) { // a line section
+    if (landmarkFlip % 2 == 1) {
+      rotatedMarking.push(point[2] + Math.PI * landmarkRotation / 2);
+    } else {
+      rotatedMarking.push(-point[2] - Math.PI * landmarkRotation / 2);
+    }
+  }
+  return rotatedMarking
 };

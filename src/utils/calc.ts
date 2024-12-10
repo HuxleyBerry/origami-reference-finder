@@ -1,4 +1,4 @@
-import type { Sequence } from "@/types/types";
+import type { Line, Sequence } from "@/types/types";
 
 function getLandmarkChildren(p: number): number[] {
   const q: number[] = [];
@@ -31,7 +31,7 @@ function getLandmarkChildren(p: number): number[] {
 
 function findBest(currentLandmark: number, currentSequence: number[], target: number, foldNum: number, optionsToReport: number, currentDepth: number, bestSequences: Sequence[]) {
   getLandmarkChildren(currentLandmark).forEach((childLandmark, index) => {
-    if (currentDepth < foldNum) {
+    if (currentDepth < foldNum - 1) {
       findBest(childLandmark, [...currentSequence, index], target, foldNum, optionsToReport, currentDepth + 1, bestSequences);
     } else {
       const difference = Math.abs(childLandmark - target);
@@ -54,14 +54,16 @@ export function getFoldList(target: number, foldNum: number): [number[], string]
   return [bestSequences[0].sequence, errorInfoText];
 };
 
-/*function includesLine(li: Line[], target: Line) { // inbuilt includes function doesn't work when the elements are all arrays
+export function includesLine(lines: Line[], target: Line): boolean { // inbuilt includes function doesn't work when the elements are all arrays
   //uses toFixed(5), because if it differs by less than 5 decimal places then it's not reasonable to fold
-  for (let i = 0; i < li.length; i++) {
-    if (li[i][0].toFixed(5) === target[0].toFixed(5) && li[i][1].toFixed(5) === target[1].toFixed(5) && li[i][2].toFixed(5) === target[2].toFixed(5) && li[i][3].toFixed(5) === target[3].toFixed(5)) {
-      return false;
-    } else if (li[i][0].toFixed(5) === target[2].toFixed(5) && li[i][1].toFixed(5) === target[3].toFixed(5) && li[i][2].toFixed(5) === target[0].toFixed(5) && li[i][3].toFixed(5) === target[1].toFixed(5)) {// catch if the labelling is flipped
+  return lines.some((line) => {
+    if (line[0].toFixed(5) === target[0].toFixed(5) && line[1].toFixed(5) === target[1].toFixed(5) && line[2].toFixed(5) === target[2].toFixed(5) && line[3].toFixed(5) === target[3].toFixed(5)) {
+      return true;
+    } else if (line[0].toFixed(5) === target[2].toFixed(5) && line[1].toFixed(5) === target[3].toFixed(5) && line[2].toFixed(5) === target[0].toFixed(5) && line[3].toFixed(5) === target[1].toFixed(5)) {// catch if the labelling is flipped
+      return true;
+    } else {
       return false;
     }
-  }
-  return true;
-};*/
+  });
+    
+};
