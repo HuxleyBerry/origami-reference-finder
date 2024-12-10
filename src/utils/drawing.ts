@@ -1,9 +1,9 @@
-import { flipLandmark, rotateArrow, rotateCornerDescription, rotateEdgeDescription, rotateLine, rotateMarking, rotatePoint } from "./rotation";
-import type { Arrow, Point, Line, DrawingSettings, FoldDrawingElements, Marking } from "@/types/types";
+import { flipLandmark, rotateArrow, rotateCornerDescription, rotateEdgeDescription, rotateLine, rotateMarking } from "./rotation";
+import type { Arrow, Line, DrawingSettings, FoldDrawingElements, Marking } from "@/types/types";
 
-function drawLine (ctx: CanvasRenderingContext2D, li: Line, stepNum: number, stepsPerLine: number): void {
-  ctx.moveTo(li[0] * 100 + 200 * (stepNum % stepsPerLine), li[1] * 100 + 200 * Math.floor(stepNum / stepsPerLine));
-  ctx.lineTo(li[2] * 100 + 200 * (stepNum % stepsPerLine), li[3] * 100 + 200 * Math.floor(stepNum / stepsPerLine));
+function drawLine (ctx: CanvasRenderingContext2D, li: Line, stepNum: number, stepsPerLine: number, drawingSize: number): void {
+  ctx.moveTo(li[0] * drawingSize + 2 * drawingSize * (stepNum % stepsPerLine), li[1] * drawingSize + 2 * drawingSize * Math.floor(stepNum / stepsPerLine));
+  ctx.lineTo(li[2] * drawingSize + 2 * drawingSize * (stepNum % stepsPerLine), li[3] * drawingSize + 2 * drawingSize * Math.floor(stepNum / stepsPerLine));
 };
 function drawText (ctx: CanvasRenderingContext2D, x: number, y: number, txt: string): void {
   const textLines = txt.split("||");
@@ -11,44 +11,44 @@ function drawText (ctx: CanvasRenderingContext2D, x: number, y: number, txt: str
     ctx.fillText(line, x, y + 10 * index, 180);
   })
 };
-function drawArrow (ctx: CanvasRenderingContext2D, a: Arrow, stepNum: number, stepsPerLine: number): void {
+function drawArrow (ctx: CanvasRenderingContext2D, a: Arrow, stepNum: number, stepsPerLine: number, drawingSize: number): void {
   //var dist = Math.sqrt(Math.pow(a[0] - a[2], 2) + Math.pow(a[1] - a[3], 2));
   const mid = [(a[0] + a[2]) / 2, (a[1] + a[3]) / 2];
   // the condition below checks whether the centre of the square is to the right of the arrow
   const midToStart = (a[2] - a[0]) * (0.5 - a[1]) - (a[3] - a[1]) * (0.5 - a[0]) < 0 ? [-a[1] + mid[1], a[0] - mid[0]] : [+a[1] - mid[1], -a[0] + mid[0]]
   const control = [mid[0] + midToStart[0], mid[1] + midToStart[1]];
-  ctx.moveTo(a[0] * 100 + 200 * (stepNum % stepsPerLine), a[1] * 100 + 200 * Math.floor(stepNum / stepsPerLine));
-  ctx.quadraticCurveTo(control[0] * 100 + 200 * (stepNum % stepsPerLine), control[1] * 100 + 200 * Math.floor(stepNum / stepsPerLine), a[2] * 100 + 200 * (stepNum % stepsPerLine), a[3] * 100 + 200 * Math.floor(stepNum / stepsPerLine));
+  ctx.moveTo(a[0] * drawingSize + 2*drawingSize * (stepNum % stepsPerLine), a[1] * drawingSize + 2*drawingSize * Math.floor(stepNum / stepsPerLine));
+  ctx.quadraticCurveTo(control[0] * drawingSize + 2*drawingSize * (stepNum % stepsPerLine), control[1] * drawingSize + 2*drawingSize * Math.floor(stepNum / stepsPerLine), a[2] * drawingSize + 2*drawingSize * (stepNum % stepsPerLine), a[3] * drawingSize + 2*drawingSize * Math.floor(stepNum / stepsPerLine));
   const angle = Math.atan2(-a[3] + control[1], -a[2] + control[0]);
-  ctx.lineTo(10 * Math.cos(angle - Math.PI / 6) + a[2] * 100 + 200 * (stepNum % stepsPerLine), 10 * Math.sin(angle - Math.PI / 4) + a[3] * 100 + 200 * Math.floor(stepNum / stepsPerLine))
-  ctx.moveTo(a[2] * 100 + 200 * (stepNum % stepsPerLine), a[3] * 100 + 200 * Math.floor(stepNum / stepsPerLine));
-  ctx.lineTo(10 * Math.cos(angle + Math.PI / 6) + a[2] * 100 + 200 * (stepNum % stepsPerLine), 10 * Math.sin(angle + Math.PI / 4) + a[3] * 100 + 200 * Math.floor(stepNum / stepsPerLine))
+  ctx.lineTo(10 * Math.cos(angle - Math.PI / 6) + a[2] * drawingSize + 2*drawingSize * (stepNum % stepsPerLine), 10 * Math.sin(angle - Math.PI / 4) + a[3] * drawingSize + 2*drawingSize * Math.floor(stepNum / stepsPerLine))
+  ctx.moveTo(a[2] * drawingSize + 2*drawingSize * (stepNum % stepsPerLine), a[3] * drawingSize + 2*drawingSize * Math.floor(stepNum / stepsPerLine));
+  ctx.lineTo(10 * Math.cos(angle + Math.PI / 6) + a[2] * drawingSize + 2*drawingSize * (stepNum % stepsPerLine), 10 * Math.sin(angle + Math.PI / 4) + a[3] * drawingSize + 2*drawingSize * Math.floor(stepNum / stepsPerLine))
   ctx.stroke();
 };
-function drawMarking (ctx: CanvasRenderingContext2D, p: Marking, stepNum: number, stepsPerLine: number, lineLength: number) {
+function drawMarking (ctx: CanvasRenderingContext2D, p: Marking, stepNum: number, stepsPerLine: number, lineLength: number, drawingSize: number) {
   if (p.length == 2) { // a point
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(100 * p[0] + 200 * (stepNum % stepsPerLine), 100 * p[1] + 200 * Math.floor(stepNum / stepsPerLine), 2, 0, 2 * Math.PI);
+    ctx.arc(drawingSize * p[0] + 2*drawingSize * (stepNum % stepsPerLine), drawingSize * p[1] + 2*drawingSize * Math.floor(stepNum / stepsPerLine), 2, 0, 2 * Math.PI);
     ctx.fill();
   } else if (p.length === 3) { // a marking
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(100 * p[0] + 200 * (stepNum % stepsPerLine) - lineLength * Math.cos(p[2]), 100 * p[1] + 200 * Math.floor(stepNum / stepsPerLine) - lineLength * Math.sin(p[2]));
-    ctx.lineTo(100 * p[0] + 200 * (stepNum % stepsPerLine) + lineLength * Math.cos(p[2]), 100 * p[1] + 200 * Math.floor(stepNum / stepsPerLine) + lineLength * Math.sin(p[2]));
+    ctx.moveTo(drawingSize * p[0] + 2*drawingSize * (stepNum % stepsPerLine) - lineLength * Math.cos(p[2]), drawingSize * p[1] + 2*drawingSize * Math.floor(stepNum / stepsPerLine) - lineLength * Math.sin(p[2]));
+    ctx.lineTo(drawingSize * p[0] + 2*drawingSize * (stepNum % stepsPerLine) + lineLength * Math.cos(p[2]), drawingSize * p[1] + 2*drawingSize * Math.floor(stepNum / stepsPerLine) + lineLength * Math.sin(p[2]));
   }
   ctx.stroke();
 };
   
-  export function drawStep (ctx: CanvasRenderingContext2D, stepNum: number, stepsPerLine: number, description: string, lines: Line[], markings: Marking[], arrows: Arrow[], settings: DrawingSettings, isFinalStep: boolean) {
+  export function drawStep (ctx: CanvasRenderingContext2D, stepNum: number, stepsPerLine: number, description: string, lines: Line[], markings: Marking[], arrows: Arrow[], settings: DrawingSettings, isFinalStep: boolean, drawingSize: number) {
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.setLineDash([]);
-    ctx.rect((stepNum % stepsPerLine) * 200, Math.floor(stepNum / stepsPerLine) * 200, 100, 100);
+    ctx.rect((stepNum % stepsPerLine) * 2 * drawingSize, Math.floor(stepNum / stepsPerLine) * 2 * drawingSize, drawingSize, drawingSize);
     ctx.stroke();
     ctx.beginPath();
     ctx.lineWidth = 0.5;
-    drawText(ctx, (stepNum % stepsPerLine) * 200, 110 + Math.floor(stepNum / stepsPerLine) * 200, description);
+    drawText(ctx, (stepNum % stepsPerLine) * 2*drawingSize, 1.1*drawingSize + Math.floor(stepNum / stepsPerLine) * 2*drawingSize, description);
     for (let i = 0; i < lines.length; i++) {
       if (i == lines.length - 1) {
         if (!isFinalStep) { // don't draw fold line if final step
@@ -64,14 +64,14 @@ function drawMarking (ctx: CanvasRenderingContext2D, p: Marking, stepNum: number
           ctx.lineWidth = 3;
         }
       }
-      drawLine(ctx, lines[i], stepNum, stepsPerLine);
+      drawLine(ctx, lines[i], stepNum, stepsPerLine, drawingSize);
     }
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = settings.pointColour;
     ctx.strokeStyle = settings.pointColour;
     markings.forEach((marking) => {
-      drawMarking(ctx, marking, stepNum, stepsPerLine, settings.lineSectionLength);
+      drawMarking(ctx, marking, stepNum, stepsPerLine, settings.lineSectionLength, drawingSize);
     })
     ctx.beginPath();
     ctx.strokeStyle = settings.mainColour;
@@ -80,7 +80,7 @@ function drawMarking (ctx: CanvasRenderingContext2D, p: Marking, stepNum: number
     if (!isFinalStep) { // don't draw arrows if final step
       ctx.beginPath();
       arrows.forEach((arrow) => {
-        drawArrow(ctx, arrow, stepNum, stepsPerLine);
+        drawArrow(ctx, arrow, stepNum, stepsPerLine, drawingSize);
       })
     }
     ctx.stroke();
