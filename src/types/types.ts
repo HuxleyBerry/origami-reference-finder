@@ -1,8 +1,8 @@
 type Angle = number
 export type Arrow = [number, number, number, number]
 export type Line = [number, number, number, number]
-export type LineSection = [number, number, Angle]
 export type Point = [number, number]
+export type Marking = [number, number] | [number, number, Angle]
 
 export interface DrawingSettings {
     pointColour: string
@@ -20,5 +20,5 @@ export interface FoldDrawingElements {
     line: Line
     arrows: Arrow[]
     description: string
-    points: (Point | LineSection)[]
+    markings: Marking[]
 }

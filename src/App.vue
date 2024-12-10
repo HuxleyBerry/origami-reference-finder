@@ -8,7 +8,7 @@
 import { onMounted, ref, useTemplateRef } from 'vue';
 import Controls from './components/Controls.vue';
 import { getFoldList } from './utils/calc';
-import { drawStep, getLinesFromOperation } from './utils/drawing';
+import { drawStep, getLinesFromOperation, rotateElements } from './utils/drawing';
 import type { DrawingSettings, Line } from './types/types';
 
 const showingFolds = ref<boolean>(false)
@@ -36,7 +36,7 @@ function getReference(reference: number, foldNum: number) {
     const [fList, descriptionText] = getFoldList(reference, foldNum);
     errorInfoText.value = descriptionText;
     console.log(fList);
-    drawSteps(ctx, fList);
+    drawSteps(ctx, [2, 31]);
   }
 };
 
@@ -46,18 +46,29 @@ function drawSteps(ctx: CanvasRenderingContext2D, fList: number[]) {
   let currentLandmark = 0.5;
   let currentStep = 0;
   const linesSoFar: Line[] = [[0.5, 0, 0.5, 1]]
+  ctx.translate(10, 10);
   drawStep(ctx, currentStep, stepsPerLine, "Fold in half horizontally", linesSoFar, [[0, 0.5, Math.PI / 2], [1, 0.5, Math.PI / 2]], [[0.1, 0.5, 0.9, 0.5]], drawingSettings.value, false)
-  fList.forEach((operation, outerIndex) => {
+  fList.forEach((operation) => {
     const { newLandmark, elements, resultFlip, resultRotation } = getLinesFromOperation(operation, currentLandmark, landmarkRotation, landmarkFlip)
-    elements.forEach((elementGroup, innerIndex) => {
+    elements.forEach((elementGroup) => {
       currentStep += 1
-      linesSoFar.push(elementGroup.line)
-      drawStep(ctx, currentStep, stepsPerLine, elementGroup.description, linesSoFar, elementGroup.points, elementGroup.arrows, drawingSettings.value, outerIndex === fList.length - 1 && innerIndex === elements.length - 1)
+      const rotatedElement = rotateElements(elementGroup, landmarkRotation, landmarkFlip)
+      linesSoFar.push(rotatedElement.line)
+      drawStep(ctx, currentStep, stepsPerLine, rotatedElement.description, linesSoFar, rotatedElement.markings, rotatedElement.arrows, drawingSettings.value, false)
     })
     currentLandmark = newLandmark
     landmarkFlip = resultFlip
     landmarkRotation = resultRotation;
   })
+  const finalElements = rotateElements({
+    description: "Landmark highlighted",
+    arrows: [],
+    markings: [[0, 0], [currentLandmark, 0]],
+    line: [0, 0, currentLandmark, 0],
+  }, landmarkRotation, landmarkFlip)
+  linesSoFar.push(finalElements.line)
+
+  drawStep(ctx, currentStep + 1, stepsPerLine, "Landmark highlighted", linesSoFar, finalElements.markings, finalElements.arrows, drawingSettings.value, true)
   /*for (let i = 0; i < fList.length; i++) {
     addLinesFromFold(fList[i], currentLandmark);
   }

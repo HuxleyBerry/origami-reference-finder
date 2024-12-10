@@ -1,4 +1,4 @@
-import type { Arrow, Point, Line, LineSection } from "@/types/types";
+import type { Point, Line } from "@/types/types";
 
 export function rotatePoint (x: number, y: number, r: number, f: number): Point { // r is the number of clockwise rotations
   let p: Point | undefined
