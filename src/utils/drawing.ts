@@ -196,7 +196,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
         line: [c, 0, 0, 1],
         arrows: [[0, 0, 2 * c / (1 + c * c), 2 - 2 / (1 + c * c)]],
         description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner to the landmark",
-        markings: [[c, 0], [c, 1]]
+        markings: [[0, 1], [c, 0]]
     };
     const fold2: FoldDrawingElements = {
         line: [1, 1 - Math.sqrt(c * c + 1) + c, 0, 1],
@@ -236,7 +236,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
         line: [c, 0, 0, 1],
         arrows: [[0, 0, 2 * c / (1 + c * c), 2 - 2 / (1 + c * c)]],
         description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner to the landmark",
-        markings: [[c, 0], [c, 1]]
+        markings: [[0,1],[c,0]]
     };
     const fold2: FoldDrawingElements = {
         line: [1, (Math.sqrt(c * c + 1) + c) * (1 - c), c, 0],
