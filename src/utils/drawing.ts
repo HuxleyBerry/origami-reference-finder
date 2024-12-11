@@ -5,12 +5,40 @@ function drawLine (ctx: CanvasRenderingContext2D, li: Line, stepNum: number, ste
   ctx.moveTo(li[0] * drawingSize + 2 * drawingSize * (stepNum % stepsPerLine), li[1] * drawingSize + 2 * drawingSize * Math.floor(stepNum / stepsPerLine));
   ctx.lineTo(li[2] * drawingSize + 2 * drawingSize * (stepNum % stepsPerLine), li[3] * drawingSize + 2 * drawingSize * Math.floor(stepNum / stepsPerLine));
 };
-function drawText (ctx: CanvasRenderingContext2D, x: number, y: number, txt: string): void {
-  const textLines = txt.split("||");
+function drawText (ctx: CanvasRenderingContext2D, x: number, y: number, txt: string, maxWidth: number, drawingSize: number): void {
+  const textLines = splitTextToFit(ctx, txt, maxWidth)
   textLines.forEach((line, index) => {
-    ctx.fillText(line, x, y + 10 * index, 180);
+    ctx.fillText(line, x, y + drawingSize * 0.1 * index);
   })
 };
+
+function splitTextToFit(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  let words = text.split(" ")
+  const lines: string[] = []
+  while (words.length > 0) {
+    const { fits, rest } = getTextThatFits(ctx, words, maxWidth);
+    lines.push(fits);
+    words = rest;
+  }
+  return lines;
+}
+
+function getTextThatFits(ctx: CanvasRenderingContext2D, words: string[], maxWidth: number) {
+  let upper = words.length
+  let lower = 1
+  while (upper > lower) {
+    const halfway = Math.ceil((upper + lower)/2)
+    const section = words.slice(0, halfway).join(" ")
+    if (ctx.measureText(section).width <= maxWidth) {
+      lower = halfway
+    } else {
+      upper = halfway - 1
+    }
+  }
+  return {fits: words.slice(0, lower).join(" "), rest: words.slice(lower)}
+}
+
+
 function drawArrow (ctx: CanvasRenderingContext2D, a: Arrow, stepNum: number, stepsPerLine: number, drawingSize: number): void {
   //var dist = Math.sqrt(Math.pow(a[0] - a[2], 2) + Math.pow(a[1] - a[3], 2));
   const mid = [(a[0] + a[2]) / 2, (a[1] + a[3]) / 2];
@@ -40,51 +68,55 @@ function drawMarking (ctx: CanvasRenderingContext2D, p: Marking, stepNum: number
   ctx.stroke();
 };
   
-  export function drawStep (ctx: CanvasRenderingContext2D, stepNum: number, stepsPerLine: number, description: string, lines: Line[], markings: Marking[], arrows: Arrow[], settings: DrawingSettings, isFinalStep: boolean, drawingSize: number) {
-    ctx.beginPath();
-    ctx.lineWidth = 1;
-    ctx.setLineDash([]);
-    ctx.rect((stepNum % stepsPerLine) * 2 * drawingSize, Math.floor(stepNum / stepsPerLine) * 2 * drawingSize, drawingSize, drawingSize);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.lineWidth = 0.5;
-    drawText(ctx, (stepNum % stepsPerLine) * 2*drawingSize, 1.1*drawingSize + Math.floor(stepNum / stepsPerLine) * 2*drawingSize, description);
-    for (let i = 0; i < lines.length; i++) {
-      if (i == lines.length - 1) {
-        if (!isFinalStep) { // don't draw fold line if final step
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.lineWidth = 1;
-          ctx.setLineDash([10, 10]);
-        } else {
-          ctx.stroke();
-          ctx.strokeStyle = "blue";
-          ctx.fillStyle = "blue"
-          ctx.beginPath();
-          ctx.lineWidth = 3;
-        }
+export function drawStep (ctx: CanvasRenderingContext2D, stepNum: number, stepsPerLine: number, description: string, lines: Line[], markings: Marking[], arrows: Arrow[], settings: DrawingSettings, isFinalStep: boolean, drawingSize: number) {
+  ctx.beginPath();
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  ctx.rect((stepNum % stepsPerLine) * 2 * drawingSize, Math.floor(stepNum / stepsPerLine) * 2 * drawingSize, drawingSize, drawingSize);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.lineWidth = 0.5;
+  // draw step number
+  ctx.font = `${drawingSize*0.15}px serif`;
+  ctx.fillText(`${stepNum}.`, (stepNum % stepsPerLine) * 2*drawingSize - 0.2*drawingSize, 0.1*drawingSize + Math.floor(stepNum / stepsPerLine) * 2*drawingSize);
+  ctx.font = `${drawingSize/10}px serif`;
+  drawText(ctx, (stepNum % stepsPerLine) * 2*drawingSize, 1.1*drawingSize + Math.floor(stepNum / stepsPerLine) * 2*drawingSize, description, drawingSize*1.5, drawingSize);
+  for (let i = 0; i < lines.length; i++) {
+    if (i == lines.length - 1) {
+      if (!isFinalStep) { // don't draw fold line if final step
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.setLineDash([10, 10]);
+      } else {
+        ctx.stroke();
+        ctx.strokeStyle = "blue";
+        ctx.fillStyle = "blue"
+        ctx.beginPath();
+        ctx.lineWidth = 3;
       }
-      drawLine(ctx, lines[i], stepNum, stepsPerLine, drawingSize);
     }
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = settings.pointColour;
-    ctx.strokeStyle = settings.pointColour;
-    markings.forEach((marking) => {
-      drawMarking(ctx, marking, stepNum, stepsPerLine, settings.lineSectionLength, drawingSize);
-    })
+    drawLine(ctx, lines[i], stepNum, stepsPerLine, drawingSize);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = settings.pointColour;
+  ctx.strokeStyle = settings.pointColour;
+  markings.forEach((marking) => {
+    drawMarking(ctx, marking, stepNum, stepsPerLine, settings.lineSectionLength, drawingSize);
+  })
+  ctx.beginPath();
+  ctx.strokeStyle = settings.mainColour;
+  ctx.fillStyle = settings.mainColour;
+  ctx.lineWidth = 1;
+  if (!isFinalStep) { // don't draw arrows if final step
     ctx.beginPath();
-    ctx.strokeStyle = settings.mainColour;
-    ctx.fillStyle = settings.mainColour;
-    ctx.lineWidth = 1;
-    if (!isFinalStep) { // don't draw arrows if final step
-      ctx.beginPath();
-      arrows.forEach((arrow) => {
-        drawArrow(ctx, arrow, stepNum, stepsPerLine, drawingSize);
-      })
-    }
-    ctx.stroke();
-  };
+    arrows.forEach((arrow) => {
+      drawArrow(ctx, arrow, stepNum, stepsPerLine, drawingSize);
+    })
+  }
+  ctx.stroke();
+};
   
 
 export function getLinesFromOperation(operationNum: number, c: number, landmarkRotation: number, landmarkFlip: number): {newLandmark: number, elements: FoldDrawingElements[], resultFlip: number, resultRotation: number} { // this assumes the original landmark is a length along the top edge starting from the top left corner
@@ -93,7 +125,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold1: FoldDrawingElements = {
       line: [c / 2, 0, c / 2, 1],
       arrows: [[0, 0.5, c, 0.5]],
-      description: "Fold the edge perpendicular to the sides||so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner||lies on the landmark you just made",
+      description: "Fold the edge perpendicular to the sides so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the landmark you just made",
       markings: [[0, 0], [c, 0]]
     }
     const fold2: FoldDrawingElements = {
@@ -108,7 +140,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold: FoldDrawingElements = {
         line: [c / 2, 0, c / 2, 1],
         arrows: [[0, 0.5, c, 0.5]],
-        description: "Fold the edge perpendicular to the sides||so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner||lies on the landmark you just made",
+        description: "Fold the edge perpendicular to the sides so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the landmark you just made",
         markings: [[0, 0], [c, 0]]
     };
     return {newLandmark, elements: [fold], resultFlip: (operationNum + landmarkFlip) % 2, resultRotation: landmarkRotation};
@@ -117,13 +149,13 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold1: FoldDrawingElements = {
         line: [c / 2, 0, c / 2, 1],
         arrows: [[0, 0.5, c, 0.5]],
-        description: "Fold the edge perpendicular to the sides||so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner||lies on the landmark you just made",
+        description: "Fold the edge perpendicular to the sides so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the landmark you just made",
         markings: [[0, 0], [c, 0]]
     };
     const fold2: FoldDrawingElements = {
         line: [3 * c / 4, 0, 3 * c / 4, 1],
         arrows: [[c / 2, 0.5, c, 0.5]],
-        description: "Fold halfway between the line you just made||and the landmark from the step before that",
+        description: "Fold halfway between the line you just made and the landmark from the step before that",
         markings: [[c / 2, 0], [c, 0]]
     };
     return {newLandmark, elements: [fold1, fold2], resultFlip: (operationNum + landmarkFlip) % 2, resultRotation: landmarkRotation};
@@ -156,7 +188,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold2: FoldDrawingElements = {
         line: [(1 - Math.sqrt(1 - c * c)) / c, 0, 0, 1],
         arrows: [[0, 0, c, Math.sqrt(2 - c * c - 2 * Math.sqrt(1 - c * c))]],
-        description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner|| so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner||lies on the crease you just made",
+        description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner  so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the crease you just made",
         markings: [[0, 1], [0, 0], [c, Math.sqrt(2 - c * c - 2 * Math.sqrt(1 - c * c)), Math.PI / 2]]
     };
     return {newLandmark, elements: [fold1, fold2], resultFlip: (operationNum + landmarkFlip) % 2, resultRotation: landmarkRotation};
@@ -171,7 +203,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold2: FoldDrawingElements = {
       line: [1, 1 - (Math.sqrt(1 - c * c) / (c + 1)), 0, 1],
       arrows: [[1, 1, c, Math.sqrt(2 - c * c - 2 * Math.sqrt(1 - c * c))]],
-      description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner|| so that the " + rotateCornerDescription(2, landmarkRotation, landmarkFlip) + " corner||lies on the crease you just made",
+      description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner  so that the " + rotateCornerDescription(2, landmarkRotation, landmarkFlip) + " corner lies on the crease you just made",
       markings: [[c, 0], [c, 1], [1, 1], [c, Math.sqrt(2 - c * c - 2 * Math.sqrt(1 - c * c)), Math.PI / 2]]
     };
     return { newLandmark, elements: [fold1, fold2], resultFlip: (operationNum + 1 + landmarkFlip) % 2, resultRotation: landmarkRotation + (1 + 2 * (landmarkFlip % 2)) };
@@ -221,7 +253,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold2: FoldDrawingElements = {
         line: [0, (Math.sqrt(c * c + 1) - c) * c, c, 0],
         arrows: [[0, 0, c - (c * c) / Math.sqrt(1 + c * c), c / Math.sqrt(1 + c * c)]],
-        description: "Fold the " + rotateEdgeDescription(0, landmarkRotation, landmarkFlip) + " edge to the crease you just made so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner||lies on that crease",
+        description: "Fold the " + rotateEdgeDescription(0, landmarkRotation, landmarkFlip) + " edge to the crease you just made so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on that crease",
         markings: [[0, 0], [c, 0], [c - (c * c) / Math.sqrt(1 + c * c), c / Math.sqrt(1 + c * c), Math.atan(1 / c)]]
     };
     return {
@@ -241,7 +273,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold2: FoldDrawingElements = {
         line: [1, (Math.sqrt(c * c + 1) + c) * (1 - c), c, 0],
         arrows: [[1, 0, c - (c - c * c) / Math.sqrt(1 + c * c), (1 - c) / Math.sqrt(1 + c * c)]],
-        description: "Fold the " + rotateEdgeDescription(0, landmarkRotation, landmarkFlip) + " edge to the crease you just made so that the " + rotateCornerDescription(1, landmarkRotation, landmarkFlip) + " corner||lies on that crease",
+        description: "Fold the " + rotateEdgeDescription(0, landmarkRotation, landmarkFlip) + " edge to the crease you just made so that the " + rotateCornerDescription(1, landmarkRotation, landmarkFlip) + " corner lies on that crease",
         markings: [[1, 0], [c, 0], [c - (c - c * c) / Math.sqrt(1 + c * c), (1 - c) / Math.sqrt(1 + c * c), Math.atan(1 / c)]]
     };
     return {
@@ -295,7 +327,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold3: FoldDrawingElements = {
         line: [0,1-(1/(c+1)),1,1-(1/(c+1))],
         arrows: [[c/(c+1),0,c/(c+1),2*c/(c+1)]],
-        description: "Fold perpendicular to the " + rotateEdgeDescription(3, landmarkRotation, landmarkFlip) + " edge||from the intersection of the crease you||just made and the diagonal",
+        description: "Fold perpendicular to the " + rotateEdgeDescription(3, landmarkRotation, landmarkFlip) + " edge from the intersection of the crease you just made and the diagonal",
         markings: [[c/(c+1),c/(c+1)]]
     };
     return {
@@ -321,7 +353,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold3: FoldDrawingElements = {
       line: [0,1-(1/(2-c)),1,1-(1/(2-c))],
       arrows: [[1/(2-c),0,1/(2-c),(2-2*c)/(2-c)]],
-      description: "Fold perpendicular to the " + rotateEdgeDescription(3, landmarkRotation, landmarkFlip) + " edge||from the intersection of the crease you||just made and the diagonal",
+      description: "Fold perpendicular to the " + rotateEdgeDescription(3, landmarkRotation, landmarkFlip) + " edge from the intersection of the crease you just made and the diagonal",
       markings: [[1/(2-c),(1-c)/(2-c)]]
     };
     return {
@@ -336,7 +368,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
       const fold: FoldDrawingElements = {
         line: [c,0,1 - Math.sqrt(c*2) + c,1],
         arrows: [[0,1,1,Math.sqrt(2*c)]],
-        description: "Fold from the landmark so that the||" + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner lies on the " + rotateEdgeDescription(1, landmarkRotation, landmarkFlip) + " edge",
+        description: "Fold from the landmark so that the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner lies on the " + rotateEdgeDescription(1, landmarkRotation, landmarkFlip) + " edge",
         markings: [[c,0],[0,1],[1,Math.sqrt(2*c),Math.PI/2]]
       };
       return {
@@ -350,7 +382,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
       const fold: FoldDrawingElements = {
         line: [c,0,c - Math.sqrt(c*2 - 1),1],
         arrows: [[0,0,1,Math.sqrt(2*c-1)]],
-        description: "Fold from the landmark so that the||" + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the " + rotateEdgeDescription(1, landmarkRotation, landmarkFlip) + " edge",
+        description: "Fold from the landmark so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the " + rotateEdgeDescription(1, landmarkRotation, landmarkFlip) + " edge",
         markings: [[c,0],[0,0],[1,Math.sqrt(2*c-1),Math.PI/2]]
       };
       return {
