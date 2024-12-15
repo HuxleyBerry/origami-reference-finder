@@ -2,7 +2,7 @@
   <div id="container">
     <div id="inner-container" ref="container">
       <Controls @find="getReference" @new-size="updateSize" @clear="reset" @new-option="handleNewOptionRequest"
-        :max-options="maxOptions" />
+        :max-options="maxOptions" :max-drawing-size="maxDrawingSize" />
       <p>{{ errorInfoText }}</p>
       <canvas ref="canvas"></canvas>
     </div>
@@ -17,8 +17,8 @@ import { getDescription, getFoldList, includesLine } from './utils/calc';
 import { drawStep, getLinesFromOperation, rotateElements } from './utils/drawing';
 import type { FoldDrawingElements, Line, Sequence } from './types/types';
 
-const showingFolds = ref<boolean>(false)
 const errorInfoText = ref<string>("")
+const maxDrawingSize = ref<number>(6);
 const canvas = useTemplateRef("canvas")
 const container = useTemplateRef("container")
 let ctx: CanvasRenderingContext2D | null = null
@@ -115,15 +115,21 @@ function drawSteps(ctx: CanvasRenderingContext2D, drawingSize: number, elementsF
       linesSoFar.push(elements.line)
       drawStep(ctx, index, stepsPerLine, elements.description, linesSoFar, elements.markings, elements.arrows, drawingSettings, index === elementsForEachStep.length - 1, drawingSize)
     })
-    showingFolds.value = true;
   }
 };
 
+function handleResize() {
+  if (container.value !== null) {
+    maxDrawingSize.value = Math.min(6, Math.floor(container.value.offsetWidth / 100));
+  }
+}
 
 onMounted(() => {
   if (canvas.value) {
     ctx = canvas.value.getContext("2d")
   }
+  handleResize()
+  window.addEventListener("resize", handleResize)
 })
 
 </script>
@@ -140,6 +146,7 @@ onMounted(() => {
   #inner-container {
     padding-left: 20px;
     padding-right: 20px;
+    max-width: 100%;
   }
 }
 

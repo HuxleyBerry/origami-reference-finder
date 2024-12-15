@@ -4,21 +4,24 @@
     <input v-model="landmark" @focus="landmarkInputFocus" @blur="landmarkInputBlur">
     <p id="landmark-error">{{ errorMessage }}</p>
     <p>Number of operations (not quite the same as folds): {{ foldNum }}</p>
-    <input type="range" min="2" max="6" v-model="foldNum" @change="foldNumSliderChange">
+    <input class="slider" type="range" min="2" max="6" v-model.number="foldNum" @change="foldNumSliderChange">
     <br>
     <p>Drawing size: {{ drawingSize }}</p>
-    <input type="range" min="2" max="6" v-model="drawingSizeSlider" @change="sliderChange">
+    <input class="slider" type="range" min="2" :max="maxDrawingSize" v-model.number="drawingSizeSlider"
+        @change="sliderChange">
     <br>
-    <button :disabled="buttonDisabled" @click="getReference" class="find-button"
-        :class="{ 'find-button-disabled': buttonDisabled }">Find reference</button>
-    <button v-if="buttonDisabled" @click="anotherOption" class="alternative-button" :disabled="optionsExhausted"
-        :class="{ 'options-button-disabled': optionsExhausted }">See another option</button>
+    <div id="buttons-div">
+        <button :disabled="buttonDisabled" @click="getReference" class="find-button"
+            :class="{ 'find-button-disabled': buttonDisabled }">Find reference</button>
+        <button v-if="buttonDisabled" @click="anotherOption" class="alternative-button" :disabled="optionsExhausted"
+            :class="{ 'options-button-disabled': optionsExhausted }">See another option</button>
+    </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 
-const props = defineProps<{ maxOptions: number }>()
+const props = defineProps<{ maxOptions: number, maxDrawingSize: number }>()
 
 const landmark = ref<string>("")
 const landmarkOnLastBlur = ref<number>(0)
@@ -79,11 +82,24 @@ function getReference() {
         optionNum.value = 0;
     }
 }
+
+watch(() => props.maxDrawingSize, (newMaxDrawingSize) => {
+    console.log(newMaxDrawingSize, drawingSizeSlider.value)
+    if (drawingSizeSlider.value > newMaxDrawingSize) {
+        drawingSizeSlider.value = newMaxDrawingSize;
+        console.log(drawingSize.value)
+        emit('newSize', drawingSize.value);
+    }
+})
 </script>
 
 <style scoped>
 p {
     font-family: sans-serif;
+}
+
+.slider {
+    accent-color: #44AF69
 }
 
 #title {
@@ -92,8 +108,7 @@ p {
 }
 
 .find-button {
-    margin-top: 40px;
-    background-color: #02ab02;
+    background-color: #44AF69;
     font-size: medium;
     padding: 8px;
     border-radius: 10px;
@@ -101,9 +116,7 @@ p {
 }
 
 .alternative-button {
-    margin-top: 40px;
-    margin-left: 20px;
-    background-color: #ab02a3;
+    background-color: #FCAB10;
     color: white;
     font-size: medium;
     padding: 8px;
@@ -126,5 +139,13 @@ p {
     margin-bottom: 0px;
     color: red;
     min-height: 18px;
+}
+
+#buttons-div {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 </style>
