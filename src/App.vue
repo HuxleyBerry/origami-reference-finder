@@ -19,6 +19,8 @@ import type { FoldDrawingElements, Line, Sequence } from './types/types';
 
 const errorInfoText = ref<string>("")
 const maxDrawingSize = ref<number>(6);
+const latestStepsPerLine = ref<number | null>(null)
+const latestDrawingSize = ref<number | null>(null)
 const canvas = useTemplateRef("canvas")
 const container = useTemplateRef("container")
 let ctx: CanvasRenderingContext2D | null = null
@@ -108,6 +110,9 @@ function drawSteps(ctx: CanvasRenderingContext2D, drawingSize: number, elementsF
   if (canvas.value && container.value !== null) {
     const linesSoFar: Line[] = []
     const stepsPerLine = Math.floor(container.value.offsetWidth / (2 * drawingSize));
+    latestStepsPerLine.value = stepsPerLine;
+    console.log("/??", latestStepsPerLine.value)
+    latestDrawingSize.value = drawingSize;
     canvas.value.width = stepsPerLine * 2 * drawingSize;
     canvas.value.height = 2 * drawingSize * (Math.ceil((elementsForEachStep.length) / stepsPerLine));
     ctx.translate(drawingSize / 5, drawingSize / 5);
@@ -121,6 +126,12 @@ function drawSteps(ctx: CanvasRenderingContext2D, drawingSize: number, elementsF
 function handleResize() {
   if (container.value !== null) {
     maxDrawingSize.value = Math.min(6, Math.floor(container.value.offsetWidth / 100));
+    if (latestDrawingSize.value !== null && latestStepsPerLine.value !== null) {
+      const stepsPerLine = Math.floor(container.value.offsetWidth / (2 * latestDrawingSize.value));
+      if (latestStepsPerLine.value !== stepsPerLine) {
+        updateSize(Math.min(50 * maxDrawingSize.value, latestDrawingSize.value))
+      }
+    }
   }
 }
 

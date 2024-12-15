@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, watchEffect } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{ maxOptions: number, maxDrawingSize: number }>()
 
@@ -84,11 +84,8 @@ function getReference() {
 }
 
 watch(() => props.maxDrawingSize, (newMaxDrawingSize) => {
-    console.log(newMaxDrawingSize, drawingSizeSlider.value)
     if (drawingSizeSlider.value > newMaxDrawingSize) {
         drawingSizeSlider.value = newMaxDrawingSize;
-        console.log(drawingSize.value)
-        emit('newSize', drawingSize.value);
     }
 })
 </script>
