@@ -1,7 +1,8 @@
 <template>
   <div id="container">
     <div id="inner-container" ref="container">
-      <Controls @find="getReference" @new-size="updateSize" @clear="reset" />
+      <Controls @find="getReference" @new-size="updateSize" @clear="reset" @new-option="handleNewOptionRequest"
+        :max-options="maxOptions" />
       <p>{{ errorInfoText }}</p>
       <canvas ref="canvas"></canvas>
     </div>
@@ -12,9 +13,9 @@
 <script setup lang="ts">
 import { onMounted, ref, useTemplateRef } from 'vue';
 import Controls from './components/Controls.vue';
-import { getFoldList, includesLine } from './utils/calc';
+import { getDescription, getFoldList, includesLine } from './utils/calc';
 import { drawStep, getLinesFromOperation, rotateElements } from './utils/drawing';
-import type { FoldDrawingElements, Line } from './types/types';
+import type { FoldDrawingElements, Line, Sequence } from './types/types';
 
 const showingFolds = ref<boolean>(false)
 const errorInfoText = ref<string>("")
@@ -26,8 +27,10 @@ const drawingSettings = {
   pointColour: "#FF0000",
   lineSectionLength: 7
 }
+const maxOptions = 5;
 
 let storedElements: FoldDrawingElements[] | null = null;
+let storedSequences: Sequence[] | null = null;
 
 
 function reset() {
@@ -39,19 +42,31 @@ function reset() {
   }
 };
 
+function findReference(reference: number, foldNum: number) {
+  storedSequences = getFoldList(reference, foldNum, maxOptions);
+}
+
 function getReference(reference: number, foldNum: number, drawingSize: number) {
-  if (canvas.value !== null && ctx != null) {
+  doEverything(reference, foldNum, drawingSize, 0)
+};
+
+function doEverything(reference: number, foldNum: number, drawingSize: number, optionNum: number) {
+  if (ctx != null) {
     reset();
-    // eliminated = []; //not in the reset() function because we only want to reset this within the getReference() function
-    const [fList, descriptionText] = getFoldList(reference, foldNum);
-    errorInfoText.value = descriptionText;
-    console.log(fList)
-    if (storedElements === null) {
-      getElementsFromFolds(ctx, fList)
+    if (optionNum === 0) {
+      findReference(reference, foldNum);
     }
+    const fList = storedSequences!![optionNum].sequence;
+    console.log(fList);
+    errorInfoText.value = getDescription(reference, storedSequences!![optionNum]);
+    getElementsFromFolds(fList);
     drawSteps(ctx, drawingSize, storedElements!!);
   }
-};
+}
+
+function handleNewOptionRequest(reference: number, foldNum: number, drawingSize: number, optionNum: number) {
+  doEverything(reference, foldNum, drawingSize, optionNum)
+}
 
 function updateSize(drawingSize: number) {
   if (ctx !== null && storedElements !== null) {
@@ -59,7 +74,7 @@ function updateSize(drawingSize: number) {
   }
 }
 
-function getElementsFromFolds(ctx: CanvasRenderingContext2D, fList: number[]): void {
+function getElementsFromFolds(fList: number[]): void {
   let landmarkRotation = 0; // number indicating what edge of the paper the current landmark is on
   let landmarkFlip = 0; // 0 if not flipped, 1 if flipped
   let currentLandmark = 0.5;

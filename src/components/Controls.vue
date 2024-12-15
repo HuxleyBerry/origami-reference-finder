@@ -1,64 +1,82 @@
 <template>
-    <h1 id="title">Reference Finder</h1>
+    <h1 id="title">Origami Reference Finder</h1>
     <p>Landmark (a number between 0 and 1):</p>
     <input v-model="landmark" @focus="landmarkInputFocus" @blur="landmarkInputBlur">
     <p id="landmark-error">{{ errorMessage }}</p>
     <p>Number of operations (not quite the same as folds): {{ foldNum }}</p>
-    <input type="range" min="2" max="6" v-model="foldNum">
+    <input type="range" min="2" max="6" v-model="foldNum" @change="foldNumSliderChange">
     <br>
     <p>Drawing size: {{ drawingSize }}</p>
     <input type="range" min="2" max="6" v-model="drawingSizeSlider" @change="sliderChange">
     <br>
-    <button :disabled="showingFolds" @click="getReference" class="find-button"
-        :class="{ 'find-button-disabled': showingFolds }">Find reference</button>
-    <button v-if="showingFolds" @click="console.log('todo')" class="alternative-button">See another option</button>
+    <button :disabled="buttonDisabled" @click="getReference" class="find-button"
+        :class="{ 'find-button-disabled': buttonDisabled }">Find reference</button>
+    <button v-if="buttonDisabled" @click="anotherOption" class="alternative-button" :disabled="optionsExhausted"
+        :class="{ 'options-button-disabled': optionsExhausted }">See another option</button>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+
+const props = defineProps<{ maxOptions: number }>()
 
 const landmark = ref<string>("")
 const landmarkOnLastBlur = ref<number>(0)
 const foldNum = ref<number>(4)
 const errorMessage = ref<string>("")
 const drawingSizeSlider = ref<number>(2)
-const showingFolds = ref<boolean>(false)
+const buttonDisabled = ref<boolean>(false)
+const optionNum = ref<number>(0)
 const emit = defineEmits<{
     find: [landmark: number, foldNum: number, drawingSize: number],
     newSize: [drawingSize: number],
     clear: []
+    newOption: [num: number, landmark: number, foldNum: number, drawingSize: number]
 }>()
 
 const drawingSize = computed(() => drawingSizeSlider.value * 50)
+const optionsExhausted = computed(() => optionNum.value >= props.maxOptions - 1)
 
 function landmarkInputBlur() {
     const landmarkAsNumber = parseFloat(landmark.value);
     if (isNaN(landmarkAsNumber) || landmarkAsNumber < 0 || landmarkAsNumber > 1) {
-        errorMessage.value = "Please enter a real number between 0 and 1."
+        errorMessage.value = "Please enter a real number between 0 and 1.";
     } else {
         if (landmarkAsNumber !== landmarkOnLastBlur.value) {
-            showingFolds.value = false;
+            buttonDisabled.value = false;
             emit('clear');
         }
         landmarkOnLastBlur.value = landmarkAsNumber;
     }
 }
 
+function anotherOption() {
+    optionNum.value += 1;
+    emit("newOption", parseFloat(landmark.value), foldNum.value, drawingSize.value, optionNum.value);
+}
+
 function landmarkInputFocus() {
-    errorMessage.value = ''
+    errorMessage.value = '';
 }
 
 function sliderChange() {
-    emit('newSize', drawingSize.value)
+    emit('newSize', drawingSize.value);
+}
+
+function foldNumSliderChange() {
+    buttonDisabled.value = false;
+    optionNum.value = 0;
+    emit('clear')
 }
 
 function getReference() {
     const landmarkAsNumber = parseFloat(landmark.value);
     if (isNaN(landmarkAsNumber) || landmarkAsNumber < 0 || landmarkAsNumber > 1) {
-        errorMessage.value = "Please enter a real number between 0 and 1."
+        errorMessage.value = "Please enter a real number between 0 and 1.";
     } else {
-        emit('find', landmarkAsNumber, foldNum.value, drawingSize.value)
-        showingFolds.value = true
+        emit('find', landmarkAsNumber, foldNum.value, drawingSize.value);
+        buttonDisabled.value = true;
+        optionNum.value = 0;
     }
 }
 </script>
@@ -82,10 +100,6 @@ p {
     cursor: pointer;
 }
 
-.find-button-disabled {
-    cursor: auto;
-}
-
 .alternative-button {
     margin-top: 40px;
     margin-left: 20px;
@@ -95,6 +109,16 @@ p {
     padding: 8px;
     border-radius: 10px;
     cursor: pointer;
+}
+
+.find-button-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.options-button-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 #landmark-error {

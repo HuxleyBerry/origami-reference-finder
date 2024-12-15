@@ -188,7 +188,7 @@ export function getLinesFromOperation(operationNum: number, c: number, landmarkR
     const fold2: FoldDrawingElements = {
         line: [(1 - Math.sqrt(1 - c * c)) / c, 0, 0, 1],
         arrows: [[0, 0, c, Math.sqrt(2 - c * c - 2 * Math.sqrt(1 - c * c))]],
-        description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner  so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the crease you just made",
+        description: "Fold from the " + rotateCornerDescription(3, landmarkRotation, landmarkFlip) + " corner so that the " + rotateCornerDescription(0, landmarkRotation, landmarkFlip) + " corner lies on the crease you just made",
         markings: [[0, 1], [0, 0], [c, Math.sqrt(2 - c * c - 2 * Math.sqrt(1 - c * c)), Math.PI / 2]]
     };
     return {newLandmark, elements: [fold1, fold2], resultFlip: (operationNum + landmarkFlip) % 2, resultRotation: landmarkRotation};

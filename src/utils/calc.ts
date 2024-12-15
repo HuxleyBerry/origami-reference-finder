@@ -45,14 +45,17 @@ function findBest(currentLandmark: number, currentSequence: number[], target: nu
   })
 }
 
-export function getFoldList(target: number, foldNum: number): [number[], string] {
+export function getFoldList(target: number, foldNum: number, maxOptions: number): Sequence[] {
   const landmark = 0.5;
   const sequence: number[] = []
   const bestSequences: Sequence[] = []
-  findBest(landmark, sequence, target, foldNum, 10, 1, bestSequences)
-  const errorInfoText = `Resultant landmark is ${bestSequences[0].landmark}. Required landmark was ${target}. This gives an error of ${bestSequences[0].difference}`;
-  return [bestSequences[0].sequence, errorInfoText];
+  findBest(landmark, sequence, target, foldNum, maxOptions, 1, bestSequences)
+  return bestSequences
 };
+
+export function getDescription(target: number, sequence: Sequence) {
+  return `Resultant landmark is ${sequence.landmark}. Required landmark was ${target}. This gives an error of ${sequence.difference}`;
+}
 
 export function includesLine(lines: Line[], target: Line): boolean { // inbuilt includes function doesn't work when the elements are all arrays
   //uses toFixed(5), because if it differs by less than 5 decimal places then it's not reasonable to fold
