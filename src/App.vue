@@ -29,7 +29,7 @@ const drawingSettings = {
   pointColour: "#FF0000",
   lineSectionLength: 7
 }
-const maxOptions = 5;
+const maxOptions = 10;
 
 let storedElements: FoldDrawingElements[] | null = null;
 let storedSequences: Sequence[] | null = null;
@@ -59,7 +59,7 @@ function doEverything(reference: number, foldNum: number, drawingSize: number, o
       findReference(reference, foldNum);
     }
     const fList = storedSequences!![optionNum].sequence;
-    console.log(fList);
+    // console.log(fList);
     errorInfoText.value = getDescription(reference, storedSequences!![optionNum]);
     getElementsFromFolds(fList);
     drawSteps(ctx, drawingSize, storedElements!!);
@@ -111,7 +111,6 @@ function drawSteps(ctx: CanvasRenderingContext2D, drawingSize: number, elementsF
     const linesSoFar: Line[] = []
     const stepsPerLine = Math.floor(container.value.offsetWidth / (2 * drawingSize));
     latestStepsPerLine.value = stepsPerLine;
-    console.log("/??", latestStepsPerLine.value)
     latestDrawingSize.value = drawingSize;
     canvas.value.width = stepsPerLine * 2 * drawingSize;
     canvas.value.height = 2 * drawingSize * (Math.ceil((elementsForEachStep.length) / stepsPerLine));
